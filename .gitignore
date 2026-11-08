@@ -1,0 +1,12 @@
+.DS_Store
+.mise.local.toml
+.venv/
+.coverage
+coverage.xml
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+dist/
+.buildkit-cache/

@@ -1,0 +1,11 @@
+groovemap-music/postgres
+Copyright (c) 2026 Robert Wlodarczyk. Licensed under the MIT License (LICENSE).
+
+The published image is the official PostgreSQL Docker image (docker.io/library/postgres:18-alpine),
+unmodified, with pgvector added:
+
+- PostgreSQL, distributed under the PostgreSQL License. https://www.postgresql.org/about/licence/
+- pgvector (https://github.com/pgvector/pgvector), distributed under the PostgreSQL License. Its
+  license ships in the image at /usr/local/share/licenses/pgvector/LICENSE.
+
+The base image's Alpine packages keep their own licenses; the image's BuildKit SBOM lists them.
