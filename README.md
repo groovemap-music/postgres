@@ -37,13 +37,21 @@ shared_preload_libraries = 'pg_stat_statements'
 pg_stat_statements.track_utility = off   # keeps ALTER ROLE ... PASSWORD out of pg_stat_statements
 ```
 
-A superuser creates the extensions in the GrooveMap database, and GrooveMap's role is granted
-`pg_read_all_stats`:
+A superuser creates the extensions in the GrooveMap database:
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
-GRANT pg_read_all_stats TO groovemap;
+```
+
+GrooveMap's role needs no `pg_read_all_stats`. Every GrooveMap service connects as that one login,
+and a role sees the full text of its own statements; on a shared server the grant would also show
+it other tenants' query text. Turning `track_utility` off does not purge statements already stored,
+so afterwards a superuser removes any role-password entries and rotates those passwords:
+
+```sql
+SELECT pg_stat_statements_reset(userid, dbid, queryid)
+FROM pg_stat_statements WHERE query ~* '\m(password|encrypted)\M';
 ```
 
 Swapping the image of an existing `postgres:18-alpine` server is an image change only: the data
