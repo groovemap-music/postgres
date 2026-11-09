@@ -9,7 +9,7 @@
 #
 # The base is pinned by the manifest digest groovemap-music/deployment reviewed for its postgres
 # service; Dependabot's docker ecosystem bumps the tag and digest together.
-FROM postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+FROM postgres:18-alpine@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395
 
 # pgvector, built from source at a release tag and verified against that tag's commit, so a moved
 # tag fails the build instead of shipping different code. OPTFLAGS="" drops pgvector's default
