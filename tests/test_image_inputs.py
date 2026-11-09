@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -117,6 +118,8 @@ def test_main(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatc
     assert image_inputs.main(["base"]) == 0
     assert capsys.readouterr().out.startswith("postgres:18-alpine@sha256:")
     assert image_inputs.main([]) == 2
+    assert image_inputs.main(["baseline", "no-such-ref"]) == 0
+    assert capsys.readouterr().out.startswith("postgres:18-alpine@sha256:")
     capsys.readouterr()
     assert image_inputs.main(["postgres-version"]) == 0
     assert capsys.readouterr().out.strip().startswith("18.")
@@ -126,3 +129,23 @@ def test_main(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatc
     monkeypatch.delenv("GITHUB_REF_NAME", raising=False)
     assert image_inputs.main(["release"]) == 0
     assert capsys.readouterr().out.strip() == "dist/v18.6.0"
+
+
+def _git(root: Path, *args: str) -> None:
+    subprocess.run(["git", "-C", str(root), *args], check=True, capture_output=True)  # noqa: S603, S607
+
+
+def test_the_baseline_is_the_base_the_ref_pins(tmp_path: Path) -> None:
+    root = _copy_repo(tmp_path)
+    released = image_inputs.check(root).base_reference
+    _git(root, "init", "-q", "-b", "main")
+    _git(root, "-c", "user.name=t", "-c", "user.email=t@example.invalid", "-c", "commit.gpgsign=false", "commit", "-q", "--allow-empty", "-m", "base")
+    _git(root, "add", "Dockerfile")
+    _git(root, "-c", "user.name=t", "-c", "user.email=t@example.invalid", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "released")
+    bumped = "f" * 64
+    (root / "Dockerfile").write_text((root / "Dockerfile").read_text().replace(image_inputs.check(root).base_digest, bumped))
+    # A Dependabot bump is proven against the base main released, not against itself.
+    assert image_inputs.baseline(root, ref="main") == released
+    assert image_inputs.check(root).base_digest == bumped
+    # A ref that does not exist falls back to this Dockerfile's base.
+    assert image_inputs.baseline(root, ref="no-such-ref").endswith(bumped)

@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 import tomllib
 from dataclasses import asdict, dataclass
@@ -171,6 +172,18 @@ def release(version: str, root: Path = ROOT, dist: Path | None = None) -> list[P
     return paths
 
 
+def baseline(root: Path = ROOT, ref: str = "origin/main") -> str:
+    """The base image a collation proof must start from: the one `ref` pins, else this Dockerfile's.
+
+    A base bump (Dependabot's digest update) is checked against the base already released, so
+    an index built under the previous base is read under the new image. Without `ref` (a fresh
+    clone with no remote, or the first commit) the proof falls back to this Dockerfile's base.
+    """
+    git = subprocess.run(["git", "-C", str(root), "show", f"{ref}:Dockerfile"], capture_output=True, text=True, check=False)  # noqa: S603, S607
+    dockerfile = git.stdout if git.returncode == 0 else (root / "Dockerfile").read_text()
+    return parse(dockerfile).base_reference
+
+
 def release_version(root: Path = ROOT, ref_name: str | None = None) -> str:
     """The release version: pyproject's, which a pushed tag (GITHUB_REF_NAME) must equal."""
     version = "v" + tomllib.loads((root / "pyproject.toml").read_text())["project"]["version"]
@@ -192,10 +205,13 @@ def main(argv: list[str]) -> int:
     if argv[:1] == ["base"]:
         print(check().base_reference)
         return 0
+    if argv[:1] == ["baseline"] and len(argv) <= 2:
+        print(baseline(ref=argv[1]) if len(argv) == 2 else baseline())
+        return 0
     if argv == ["postgres-version"]:
         print(postgres_version(release_version()))
         return 0
-    print("usage: image_inputs.py check | base | postgres-version | release", file=sys.stderr)
+    print("usage: image_inputs.py check | base | baseline [<ref>] | postgres-version | release", file=sys.stderr)
     return 2
 
 
