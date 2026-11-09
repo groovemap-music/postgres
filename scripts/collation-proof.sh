@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 # Proves the image leaves collation unchanged: initialises a cluster and builds text indexes under
-# the base image this repository pins, then opens the SAME data directory under the new image and
+# the base image main pins (the released one; on a base bump, the previous base), then opens the SAME data directory under the new image and
 # compares text ordering (sort, lower(), index order) and runs amcheck with heapallindexed. As a
 # control it loads the same rows into Debian's glibc postgres:18, whose ordering must differ, so
 # the probe is shown to tell the two libcs apart. Disposable: removes its containers and volume.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-old="$(python3 "${root}/scripts/image_inputs.py" base)"
+# The proof starts from the base main already pins (COLLATION_BASELINE_REF), so a base bump is read
+# against the previous base, not against itself. On main, or without that ref, it is the current base.
+old="${BASELINE_IMAGE:-$(python3 "${root}/scripts/image_inputs.py" baseline "${COLLATION_BASELINE_REF:-origin/main}")}"
 new="${IMAGE:-groovemap-postgres:local}"
 control="${CONTROL_IMAGE:-postgres:18}"
 out="${COLLATION_PROOF_DIR:-${root}/dist/collation-proof}"
