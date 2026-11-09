@@ -1,6 +1,6 @@
 [project]
 name = "groovemap-postgres"
-version = "18.6.0"
+version = "18.6.1"
 description = "GrooveMap's PostgreSQL image: official postgres:18-alpine plus pgvector"
 readme = "README.md"
 license = "MIT"
