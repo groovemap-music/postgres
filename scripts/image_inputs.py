@@ -199,7 +199,7 @@ def main(argv: list[str]) -> int:
         print(f"ok: {inputs.base_reference} + pgvector {inputs.pgvector_version} ({inputs.pgvector_commit})")
         return 0
     if argv == ["release"]:
-        for path in release(release_version(ref_name=os.environ.get("GITHUB_REF_NAME"))):
+        for path in release(release_version(ROOT, ref_name=os.environ.get("GITHUB_REF_NAME"))):
             print(path.relative_to(ROOT))
         return 0
     if argv[:1] == ["base"]:
@@ -209,7 +209,7 @@ def main(argv: list[str]) -> int:
         print(baseline(ref=argv[1]) if len(argv) == 2 else baseline())
         return 0
     if argv == ["postgres-version"]:
-        print(postgres_version(release_version()))
+        print(postgres_version(release_version(ROOT)))
         return 0
     print("usage: image_inputs.py check | base | baseline [<ref>] | postgres-version | release", file=sys.stderr)
     return 2

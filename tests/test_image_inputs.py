@@ -128,7 +128,7 @@ def test_main(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatc
     monkeypatch.setattr(image_inputs, "release", lambda version, root=root: [root / "dist" / version])
     monkeypatch.delenv("GITHUB_REF_NAME", raising=False)
     assert image_inputs.main(["release"]) == 0
-    assert capsys.readouterr().out.strip() == "dist/v18.6.0"
+    assert capsys.readouterr().out.strip() == f"dist/{image_inputs.release_version(root)}"
 
 
 def _git(root: Path, *args: str) -> None:
